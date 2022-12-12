@@ -99,10 +99,12 @@ class WeatherProcessor:
         summary_df.to_csv(
             "./DataSciTest/answers/YearlyAverages.out", sep="\t", index=False
         )
+        self.problem2 = summary_df
 
     def problem3(self):
         """Count how many weather stations experience the most record setting year"""
-        problem2_df = pd.read_csv("./DataSciTest/answers/YearlyAverages.out", sep="\t")
+        problem2_df = self.problem2.copy()
+
         records = (
             problem2_df.groupby(["filename"])
             .agg(
@@ -149,8 +151,25 @@ class WeatherProcessor:
             "./DataSciTest/answers/YearHistogram.out", sep="\t", index=False
         )
 
+    def problem4(self):
+        """Pearson Correlation between weather and crop yeild"""
+        problem2_df = self.problem2.copy()
+        problem4_df = problem2_df.merge(self.yield_df, how="left", on="year")
+
+        corr_df = problem4_df.groupby(["filename"])[
+            ["avg_tmax", "avg_tmin", "total_precip", "corn_yield"]
+        ].corr()
+        corr_df.reset_index(inplace=True)
+        corr_df = corr_df[corr_df.level_1 == "corn_yield"]
+        corr_df.drop(columns=["level_1", "corn_yield"], inplace=True)
+        corr_df = np.round(corr_df, 2)
+        corr_df.sort_values(["filename"], inplace=True)
+
+        corr_df.to_csv("./DataSciTest/answers/Correlations.out", sep="\t", index=False)
+
 
 def main():
+    """ Main Method """
     parser = argparse.ArgumentParser()
     parser.add_argument("station_dir", help="directory with weather station files")
     parser.add_argument("yield_dir", help="directory with yield data files")
@@ -158,16 +177,15 @@ def main():
     args = parser.parse_args()
 
     wp = WeatherProcessor(station_dir=args.station_dir, yield_dir=args.yield_dir)
-    print(args.station_dir)
-    print(args.yield_dir)
+    print(f"weather station data directory: {args.station_dir}")
+    print(f"crop yield data directory: {args.yield_dir}")
     wp.read_all_stations()
     wp.read_yield()
 
-    print(wp.weather_df.head())
-    print(wp.yield_df.head())
     wp.problem1()
     wp.problem2()
     wp.problem3()
+    wp.problem4()
 
 
 if __name__ == "__main__":
