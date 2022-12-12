@@ -13,15 +13,19 @@ class WeatherProcessor:
         self.yield_dir = yield_dir
 
     def read_all_stations(self):
-        """ Read all weather data in weather directory into dataframe """
-        station_list = [station for station in os.listdir(self.station_dir) if station[-4:] == ".txt"]
+        """Read all weather data in weather directory into dataframe"""
+        station_list = [
+            station
+            for station in os.listdir(self.station_dir)
+            if station[-4:] == ".txt"
+        ]
 
         weather_list = []
         for filename in station_list:
             station_id = filename[:-4]
             filename = os.path.join(self.station_dir, filename)
             wd = self._read_weather(filename)
-            wd['station_id'] = station_id
+            wd["station_id"] = station_id
             weather_list.append(wd)
 
         weather_df = pd.concat(weather_list)
@@ -51,18 +55,17 @@ class WeatherProcessor:
 
     def problem1(self):
         wd = self.weather_df.copy()
-        wd['missing_precip'] = np.where(
-            (wd.tmax.notna()) & (wd.tmin.notna()) & (wd.precip.isna()),
-            1,
-            0
+        wd["missing_precip"] = np.where(
+            (wd.tmax.notna()) & (wd.tmin.notna()) & (wd.precip.isna()), 1, 0
         )
-        summary_df = wd.groupby(['station_id'])['missing_precip'].sum().reset_index()
-        summary_df.columns = ['file', 'missing_precip']
+        summary_df = wd.groupby(["station_id"])["missing_precip"].sum().reset_index()
+        summary_df.columns = ["file", "missing_precip"]
         summary_df.file = summary_df.file.apply(lambda x: x + ".txt")
-        summary_df.sort_values(['file'], ascending=True, inplace=True)
+        summary_df.sort_values(["file"], ascending=True, inplace=True)
 
-        summary_df.to_csv("./DataSciTest/answers/MissingPrcpData.out", sep="\t", index=False)
-
+        summary_df.to_csv(
+            "./DataSciTest/answers/MissingPrcpData.out", sep="\t", index=False
+        )
 
 
 def main():
