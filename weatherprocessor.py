@@ -72,22 +72,67 @@ class WeatherProcessor:
         print(wd)
 
         summary_df = wd.groupby(['station_id', 'year']).agg(
-            avg_max = ('tmax', np.mean),
-            avg_min = ('tmin', np.mean),
+            avg_tmax = ('tmax', np.mean),
+            avg_tmin = ('tmin', np.mean),
             total_precip = ('precip', np.sum)
         ).reset_index()
 
         summary_df.rename(columns={'station_id': 'filename'}, inplace=True)
         summary_df.filename = summary_df.filename.apply(lambda x: x + ".txt")
 
-        summary_df.avg_max = np.round(summary_df.avg_max, 2)
-        summary_df.avg_min = np.round(summary_df.avg_min, 2)
+        summary_df.avg_tmax = np.round(summary_df.avg_tmax, 2)
+        summary_df.avg_tmin = np.round(summary_df.avg_tmin, 2)
         summary_df.total_precip = summary_df.total_precip / 10 # mm to cm
         summary_df.total_precip = np.round(summary_df.total_precip, 2)
 
         summary_df.sort_values(['filename', 'year'], ascending=True, inplace=True)
         summary_df.fillna(-9999, inplace=True)
         summary_df.to_csv('./DataSciTest/answers/YearlyAverages.out', sep='\t', index=False)
+
+    def problem3(self):
+        """ Count how many weather stations experience the most record setting year """
+        problem2_df = pd.read_csv("./DataSciTest/answers/YearlyAverages.out", sep='\t')
+        records = problem2_df.groupby(['filename']).agg(
+            record_avg_tmax = ('avg_tmax', np.max),
+            record_avg_tmin = ('avg_tmin', np.max),
+            record_total_precip = ('total_precip', np.max)
+        ).reset_index()
+        print("problem 2")
+
+        print(problem2_df.head(20))
+
+        print("records")
+        print(records)
+
+        problem3_df = problem2_df.merge(records, how='left', on=['filename'])
+        problem3_df['tmax_record_year'] = np.where(
+            problem3_df.avg_tmax == problem3_df.record_avg_tmax,
+            1,
+            0
+        )
+        problem3_df['tmin_record_year'] = np.where(
+            problem3_df.avg_tmin == problem3_df.record_avg_tmin,
+            1,
+            0
+        )
+        problem3_df['precip_record_year'] = np.where(
+            problem3_df.avg_tmin == problem3_df.record_avg_tmin,
+            1,
+            0
+        )
+
+        print("problem3_df")
+        print(problem3_df.head(100))
+
+        histogram_df = problem3_df.groupby(['year']).agg(
+            tmax_record_count = ('tmax_record_year', np.sum),
+            tmin_record_count = ('tmin_record_year', np.sum),
+            precip_record_count = ('precip_record_year', np.sum)
+        ).reset_index().sort_values(['year'])
+        print("historgram_df")
+        print(histogram_df)
+
+
 
 
 
@@ -108,6 +153,7 @@ def main():
     print(wp.yield_df.head())
     wp.problem1()
     wp.problem2()
+    wp.problem3()
 
 
 if __name__ == "__main__":
