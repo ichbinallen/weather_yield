@@ -44,12 +44,14 @@ class WeatherProcessor:
         return df
 
     def read_yield(self):
+        """ Reads Yield Data from yield_dir into pd dataframe """
         yield_file = os.listdir(self.yield_dir)[0]
         yield_file = os.path.join(self.yield_dir, yield_file)
         yield_df = pd.read_csv(yield_file, sep="\t", names=["year", "corn_yield"])
         self.yield_df = yield_df
 
     def problem1(self):
+        """ Counts number of days with missing precipitation """
         wd = self.weather_df.copy()
         wd['missing_precip'] = np.where(
             (wd.tmax.notna()) & (wd.tmin.notna()) & (wd.precip.isna()),
@@ -62,7 +64,30 @@ class WeatherProcessor:
         summary_df.sort_values(['file'], ascending=True, inplace=True)
 
         summary_df.to_csv("./DataSciTest/answers/MissingPrcpData.out", sep="\t", index=False)
-        print(summary_df)
+
+    def problem2(self):
+        """ Computes summary stats for each weather station """
+        wd = self.weather_df.copy()
+        wd['year'] = wd.date.dt.year
+        print(wd)
+
+        summary_df = wd.groupby(['station_id', 'year']).agg(
+            avg_max = ('tmax', np.mean),
+            avg_min = ('tmin', np.mean),
+            total_precip = ('precip', np.sum)
+        ).reset_index()
+
+        summary_df.rename(columns={'station_id': 'filename'}, inplace=True)
+        summary_df.filename = summary_df.filename.apply(lambda x: x + ".txt")
+
+        summary_df.avg_max = np.round(summary_df.avg_max, 2)
+        summary_df.avg_min = np.round(summary_df.avg_min, 2)
+        summary_df.total_precip = summary_df.total_precip / 10 # mm to cm
+        summary_df.total_precip = np.round(summary_df.total_precip, 2)
+
+        summary_df.sort_values(['filename', 'year'], ascending=True, inplace=True)
+        summary_df.fillna(-9999, inplace=True)
+        summary_df.to_csv('./DataSciTest/answers/YearlyAverages.out', sep='\t', index=False)
 
 
 
@@ -82,6 +107,7 @@ def main():
     print(wp.weather_df.head())
     print(wp.yield_df.head())
     wp.problem1()
+    wp.problem2()
 
 
 if __name__ == "__main__":
