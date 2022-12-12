@@ -49,6 +49,22 @@ class WeatherProcessor:
         yield_df = pd.read_csv(yield_file, sep="\t", names=["year", "corn_yield"])
         self.yield_df = yield_df
 
+    def problem1(self):
+        wd = self.weather_df.copy()
+        wd['missing_precip'] = np.where(
+            (wd.tmax.notna()) & (wd.tmin.notna()) & (wd.precip.isna()),
+            1,
+            0
+        )
+        summary_df = wd.groupby(['station_id'])['missing_precip'].sum().reset_index()
+        summary_df.columns = ['file', 'missing_precip']
+        summary_df.file = summary_df.file.apply(lambda x: x + ".txt")
+        summary_df.sort_values(['file'], ascending=True, inplace=True)
+
+        summary_df.to_csv("./DataSciTest/answers/MissingPrcpData.out", sep="\t", index=False)
+        print(summary_df)
+
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -65,6 +81,7 @@ def main():
 
     print(wp.weather_df.head())
     print(wp.yield_df.head())
+    wp.problem1()
 
 
 if __name__ == "__main__":
