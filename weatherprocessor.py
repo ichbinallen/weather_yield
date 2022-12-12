@@ -62,7 +62,6 @@ class WeatherProcessor:
         summary_df.sort_values(['file'], ascending=True, inplace=True)
 
         summary_df.to_csv("./DataSciTest/answers/MissingPrcpData.out", sep="\t", index=False)
-        print(summary_df)
 
 
 
@@ -74,13 +73,11 @@ def main():
     args = parser.parse_args()
 
     wp = WeatherProcessor(station_dir=args.station_dir, yield_dir=args.yield_dir)
-    print(args.station_dir)
-    print(args.yield_dir)
+    print(f"Reading weather files from: {args.station_dir}")
+    print(f"Reading yield file from: {args.yield_dir}")
     wp.read_all_stations()
     wp.read_yield()
 
-    print(wp.weather_df.head())
-    print(wp.yield_df.head())
     wp.problem1()
 
 
